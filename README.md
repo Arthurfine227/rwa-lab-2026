@@ -222,3 +222,52 @@ What the zip must contain:
 
 The discussion prompts live in `STUDENT-QUESTIONS.md` — one per plank, no standard answers, and the
 real point of this lab.
+
+
+## Architecture: the four planks of the RWA bridge
+
+```mermaid
+flowchart TB
+  U["Investor wallet"]
+  subgraph ON["On-chain contracts"]
+    A["d. Admission: ComplianceRegistry"]
+    T["TBillToken: 18-decimal shares"]
+    V["TBillVault: USDC buffer"]
+    F["b. Attestation: MockPriceFeed NAV"]
+    Q["c. Redemption: RedemptionQueue FIFO"]
+    C["a. Custody: MockTBillCustodian records"]
+  end
+  subgraph OFF["Off-chain legal and financial system"]
+    K["Compliance team: KYC and sanctions"]
+    R["Reporter: valuation and reconciliation"]
+    S["SPV and custodian: actual Treasury bills"]
+    B["Bank and broker: purchases and T+1 cash"]
+  end
+  K -->|"eligibility decision crosses bridge"| A
+  A -->|"checks both endpoints"| T
+  U -->|"USDC subscribe"| V
+  V -->|"mint shares"| T
+  T -->|"shares delivered"| U
+  R -->|"NAV attestation crosses bridge"| V
+  V -->|"attest"| F
+  F -->|"NAV prices tickets"| Q
+  V -->|"invest: mock cash transfer"| C
+  C -.->|"represents custody, not proof"| S
+  S --- B
+  V -.->|"real cash crosses bridge for purchases"| B
+  B -.->|"sale proceeds cross bridge: depositReserves"| V
+  U -->|"approve and enqueue shares"| Q
+  Q -->|"request releaseReserves"| V
+  V -->|"settlement cash"| Q
+  Q -->|"burn escrowed shares"| T
+  Q -->|"claim USDC"| U
+```
+
+Solid arrows describe contract interactions. Dashed arrows show the off-chain bridge and legal dependencies represented by mocks. Treasury bills remain off-chain; shares are issued, escrowed, and burned on-chain. The custodian mock records reported holdings and does not establish legal ownership. Settlement requires liquid reserves, even when reported asset value is sufficient.
+
+## Validation
+
+- `make doctor`: environment and core tests passed.
+- `make test`: 7 tests passed, 0 failed.
+- `make exercise`: 19 tests passed, 0 failed.
+- Ex6: both invariants passed, with 128,000 handler calls and 0 reverts in the recorded run.
