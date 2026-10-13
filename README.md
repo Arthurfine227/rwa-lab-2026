@@ -271,3 +271,24 @@ Solid arrows describe contract interactions. Dashed arrows show the off-chain br
 - `make test`: 7 tests passed, 0 failed.
 - `make exercise`: 19 tests passed, 0 failed.
 - Ex6: both invariants passed, with 128,000 handler calls and 0 reverts in the recorded run.
+
+
+## Deployment (Sepolia)
+
+Network: Sepolia (chain ID `11155111`). Deployer: `0x6902E93015d351eA09a1c420a25163779D514547`.
+
+All seven contracts were deployed successfully and their source code was verified on Etherscan.
+
+| Contract | Address | Verified source |
+|---|---|---|
+| MockUSDC | `0x6ba5e014a20c3044294ea9eeff9f01089fac9552` | [Etherscan](https://sepolia.etherscan.io/address/0x6ba5e014a20c3044294ea9eeff9f01089fac9552#code) |
+| ComplianceRegistry | `0x240876c8c0a98b57a62af4145764285f2719d146` | [Etherscan](https://sepolia.etherscan.io/address/0x240876c8c0a98b57a62af4145764285f2719d146#code) |
+| MockPriceFeed | `0x69d1b9e1369afe081a76283ad93b436749dedf94` | [Etherscan](https://sepolia.etherscan.io/address/0x69d1b9e1369afe081a76283ad93b436749dedf94#code) |
+| TBillToken | `0xb6feed1c77951228e5ef8a74c437a0e3dd12f8a8` | [Etherscan](https://sepolia.etherscan.io/address/0xb6feed1c77951228e5ef8a74c437a0e3dd12f8a8#code) |
+| MockTBillCustodian | `0x186e27862a1cf538dfe42ec9acf6263c8c9b825a` | [Etherscan](https://sepolia.etherscan.io/address/0x186e27862a1cf538dfe42ec9acf6263c8c9b825a#code) |
+| TBillVault | `0x03ede2e9b6bc4403a0ffdb5653444e56044a8fdd` | [Etherscan](https://sepolia.etherscan.io/address/0x03ede2e9b6bc4403a0ffdb5653444e56044a8fdd#code) |
+| RedemptionQueue | `0xf7757ce0588fc9df178fd757d16d0d5d9dbd9326` | [Etherscan](https://sepolia.etherscan.io/address/0xf7757ce0588fc9df178fd757d16d0d5d9dbd9326#code) |
+
+Deployment completed with 13 successful transactions (seven contract creations and six wiring calls). On-chain checks confirmed that all seven addresses contain code, the vault points to the queue, the queue is whitelisted, the vault and queue have `MINTER_ROLE`, and the vault has the custodian's `CUSTODIAN_ROLE`.
+
+The local gas estimates were lower than RPC estimates for contract creation. The successful deployment used `--slow --gas-estimate-multiplier 1000`; verification then used the existing broadcast record with `--resume --verify`. Failed attempts are not the addresses submitted above.
