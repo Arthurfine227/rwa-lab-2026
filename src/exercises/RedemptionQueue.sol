@@ -94,8 +94,12 @@ contract RedemptionQueue is AccessControl {
     /// @notice Value `shares` (18 decimals) in USDC smallest units (6 decimals), at an
     ///         8-decimal NAV
     /// @dev The product carries 18 + 8 = 26 decimals and you want 6 — divide by 10 to the what?
-    function assetsAtNav(uint256 shares, uint256 nav) public pure returns (uint256) {
-        revert("TODO Ex5.1: assetsAtNav");
+    function assetsAtNav(uint256 shares, uint256 nav)
+    public
+    pure
+    returns (uint256)
+    {
+    return shares * nav / DECIMALS_SCALE;
     }
 
     // ==================================================================
@@ -112,7 +116,39 @@ contract RedemptionQueue is AccessControl {
     ///      Locking the rate now is the point: the payout must not drift with the NAV while
     ///      the ticket waits in the queue.
     function enqueue(uint256 shares) external returns (uint256 id) {
-        revert("TODO Ex5.2: enqueue");
+    if (shares == 0) revert ZeroAmount();
+
+    IERC20(address(tBill)).safeTransferFrom(
+        msg.sender,
+        address(this),
+        shares
+    );
+
+    uint256 assetsLocked = assetsAtNav(
+        shares,
+        vault.navPerShare()
+    );
+
+    id = requests.length;
+
+    requests.push(
+        Request({
+            owner: msg.sender,
+            shares: shares,
+            assetsLocked: assetsLocked,
+            settled: false
+        })
+    );
+
+    pendingShares += shares;
+    pendingAssets += assetsLocked;
+
+    emit RedeemRequested(
+        id,
+        msg.sender,
+        shares,
+        assetsLocked
+    );
     }
 
     // ==================================================================
