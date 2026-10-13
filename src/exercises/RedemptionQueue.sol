@@ -167,8 +167,44 @@ contract RedemptionQueue is AccessControl {
     ///        - decrement pendingShares and pendingAssets
     ///        - credit the owner's claimable balance and totalClaimable
     ///      Return how much you actually paid out.
-    function settle(uint256 assets) external onlyRole(SETTLER_ROLE) returns (uint256 filled) {
-        revert("TODO Ex5.3: settle");
+    function settle(uint256 assets)
+    external
+    onlyRole(SETTLER_ROLE)
+    returns (uint256 filled)
+    {
+    while (head < requests.length) {
+        Request storage request = requests[head];
+
+        if (request.assetsLocked > assets - filled) {
+            break;
+        }
+
+        request.settled = true;
+        ++head;
+
+        pendingShares -= request.shares;
+        pendingAssets -= request.assetsLocked;
+
+        claimable[request.owner] += request.assetsLocked;
+        totalClaimable += request.assetsLocked;
+        filled += request.assetsLocked;
+
+        vault.releaseReserves(
+            address(this),
+            request.assetsLocked
+        );
+
+        tBill.burn(
+            address(this),
+            request.shares
+        );
+
+        emit Settled(
+            head - 1,
+            request.owner,
+            request.assetsLocked
+        );
+    }
     }
 
     // ==================================================================
@@ -178,6 +214,17 @@ contract RedemptionQueue is AccessControl {
     /// @notice Withdraw the cash credited to you by settled tickets
     /// @dev Checks-effects-interactions: zero the balance before the transfer.
     function claim() external returns (uint256 assets) {
-        revert("TODO Ex5.4: claim");
+    assets = claimable[msg.sender];
+
+    if (assets == 0) {
+        revert NothingToClaim();
+    }
+
+    claimable[msg.sender] = 0;
+    totalClaimable -= assets;
+
+    usdc.safeTransfer(msg.sender, assets);
+
+    emit Claimed(msg.sender, assets);
     }
 }
